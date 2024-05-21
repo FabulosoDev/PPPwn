@@ -2,12 +2,8 @@ name: Build stages and create release
 
 on:
   push:
-    branches:
-      - goldhen
-  pull_request:
-    branches:
-      - goldhen
-
+    tags:
+      - 'v*'
 jobs:
   build:
     runs-on: ubuntu-latest
