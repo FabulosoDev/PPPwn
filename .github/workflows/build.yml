@@ -1,0 +1,52 @@
+name: Build stages and create release
+
+on:
+  push:
+    branches:
+      - goldhen
+  pull_request:
+    branches:
+      - goldhen
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: goldhen
+          submodules: recursive
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential zip
+
+      - name: Set outputs
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Build firmware for each version
+        run: |
+          for FW_VERSION in 900 1000 1001 1100; do
+            make -C stage1 FW=$FW_VERSION clean && make -C stage1 FW=$FW_VERSION
+            make -C stage2 FW=$FW_VERSION clean && make -C stage2 FW=$FW_VERSION
+            mkdir stage1/$FW_VERSION && mv stage1/stage1.bin stage1/$FW_VERSION
+            mkdir stage2/$FW_VERSION && mv stage2/stage2.bin stage2/$FW_VERSION
+          done
+          zip -r "stages-all.zip" stage*/*/*.bin
+
+      - name: Upload all stages artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stages-all
+          path: stage*/*/*.bin
+          if-no-files-found: error
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: GoldHEN stages
+          tag_name: stages-${{ steps.vars.outputs.sha_short }}
+          files: ./stages-all.zip
+          prerelease: false
