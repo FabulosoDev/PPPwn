@@ -1,9 +1,7 @@
 name: Build stages and create release
 
-on:
-  push:
-    tags:
-      - 'v*'
+on: workflow_dispatch
+
 jobs:
   build:
     runs-on: ubuntu-latest
