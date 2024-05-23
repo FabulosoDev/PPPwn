@@ -40,8 +40,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          #name: GoldHEN stages (${{ steps.vars.outputs.sha_short }})
-          generate_release_notes: true
-          tag_name: stages-${{ steps.vars.outputs.sha_short }}
+          name: GoldHEN stages (${{ steps.vars.outputs.sha_short }})
+          tag_name: commit-${{ steps.vars.outputs.sha_short }}
+          body: SiSTR0/PPPwn@${{ steps.vars.outputs.sha_short }}
           files: ./stages-all.zip
           prerelease: false
