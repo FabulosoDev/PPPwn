@@ -223,6 +223,7 @@ static void create_dir(struct thread *td, const char *dir) {
 
   char tmp[256];
   char *p = NULL;
+  mode_t mode = S_IRWXU | S_IRWXG | S_IRWXO;
   size_t len;
 
   snprintf(tmp, sizeof(tmp), "%s", dir);
@@ -234,13 +235,13 @@ static void create_dir(struct thread *td, const char *dir) {
   for (p = tmp + 1; *p; p++) {
     if (*p == '/') {
       *p = '\0';
-      ksys_mkdir(td, tmp, S_IRWXU);
+      ksys_mkdir(td, tmp, mode);
       *p = '/';
     }
   }
 
   if (dir[len - 1] == '/') {
-    ksys_mkdir(td, tmp, S_IRWXU);
+    ksys_mkdir(td, tmp, mode);
   }
 }
 
@@ -252,13 +253,13 @@ int file_exists(struct thread *td, const char *path) {
     return ksys_access(td, &uap) == 0;
 }
 
-void file_copy(struct thread *td, char* src, char* dst) {
+int file_copy(struct thread *td, char* src, char* dst) {
   uint64_t kaslr_offset = rdmsr(MSR_LSTAR) - kdlsym_addr_Xfast_syscall;
   int (*printf)(const char *format, ...) = (void *)kdlsym(printf);
 
   if (!file_exists(td, src)) {
     printf("[-] Error: Source file %s does not exist\n", src);
-    return;
+    return 0;
   }
 
   create_dir(td, PAYLOAD_INT_PATH);
@@ -266,14 +267,14 @@ void file_copy(struct thread *td, char* src, char* dst) {
   int src_fd = ksys_open(td, src, O_RDONLY, 0);
   if (src_fd < 0) {
     printf("[-] Error: Unable to open source file %s\n", src);
-    return;
+    return 0;
   }
 
   int dest_fd = ksys_open(td, dst, O_WRONLY | O_CREAT | O_TRUNC, 0644);
   if (dest_fd < 0) {
     printf("[-] Error: Unable to create destination file %s\n", dst);
     ksys_close(td, src_fd);
-    return;
+    return 0;
   }
 
   char buffer[1024];
@@ -286,7 +287,7 @@ void file_copy(struct thread *td, char* src, char* dst) {
       printf("[-] Error: Unable to write to destination file %s\n", dst);
       ksys_close(td, src_fd);
       ksys_close(td, dest_fd);
-      return;
+      return 0;
     }
   }
 
@@ -294,11 +295,12 @@ void file_copy(struct thread *td, char* src, char* dst) {
     printf("[-] Error: Unable to read from source file %s\n", src);
     ksys_close(td, src_fd);
     ksys_close(td, dest_fd);
-    return;
+    return 0;
   }
 
   ksys_close(td, src_fd);
   ksys_close(td, dest_fd);
+  return 1;
 }
 
 void exec_payload(struct thread *td, char* payload_path) {
@@ -369,7 +371,9 @@ void inject_payload(struct thread *td) {
       }
     }
 
-    file_copy(td, PAYLOAD_EXT_PATH, PAYLOAD_INT_PATH);
+    if (file_copy(td, PAYLOAD_EXT_PATH, PAYLOAD_INT_PATH)) {
+        notify("Payload successfully transferred to internal HDD!");
+    }
   }
 
   if (!file_exists(td, PAYLOAD_INT_PATH)) {
