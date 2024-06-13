@@ -22,7 +22,7 @@ jobs:
 
       - name: Build goldhen stage2 for compatible firmwares
         run: |
-          for FW_VERSION in 900 1000 1001 1100; do
+          for FW_VERSION in 900 960 1000 1001 1100; do
             make -C stage2 FW=$FW_VERSION clean && make -C stage2 FW=$FW_VERSION
             mkdir stage2/$FW_VERSION && mv stage2/stage2.bin stage2/$FW_VERSION
           done
