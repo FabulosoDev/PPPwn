@@ -245,6 +245,15 @@
 #define kdlsym_addr_copyinstr_patch2 0xffffffff822d7a6f
 #define kdlsym_addr_copyinstr_patch3 0xffffffff822d7aa0
 
+#define kdlsym_addr_kernel_map 0xffffffff844a9250
+#define kdlsym_addr_kmem_alloc 0xffffffff82628960
+#define kdlsym_addr_kmem_free 0xffffffff82628b30
+
+#define kdlsym_addr_sceKernelSendNotificationRequest 0xffffffff823d4950
+#define kdlsym_addr_vsprintf 0xffffffff82651150
+#define kdlsym_addr_snprintf 0xffffffff82651180
+#define kdlsym_addr_strlen 0xffffffff82360da0
+
 
 #elif FIRMWARE == 1100 // FW 11.00
 
